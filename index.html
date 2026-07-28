@@ -1,0 +1,2563 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Play Musik</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js">
+    </script>
+    <style>
+        /* ========== RESET & GLOBAL ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            background: #eef3fb;
+            color: #1d2b53;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 0 0 90px 0;
+        }
+        .container {
+            max-width: 480px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 16px 18px 20px 18px;
+        }
+
+        /* ========== AUTH ========== */
+        #authContainer {
+            background: #fff;
+            border-radius: 24px;
+            padding: 28px 20px 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            margin-top: 30px;
+        }
+        #authContainer h1 {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 2px;
+            letter-spacing: -0.5px;
+        }
+        #authContainer h1 span {
+            background: #2d7cff;
+            color: #fff;
+            padding: 2px 12px;
+            border-radius: 8px;
+            font-size: 30px;
+        }
+        #authContainer .sub {
+            text-align: center;
+            color: #7b87a8;
+            font-size: 13px;
+            margin-bottom: 22px;
+            font-weight: 400;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #eef3fb;
+        }
+        .auth-tabs button {
+            flex: 1;
+            padding: 10px 0;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            font-size: 15px;
+            color: #7b87a8;
+            cursor: pointer;
+            transition: .2s;
+            border-bottom: 3px solid transparent;
+        }
+        .auth-tabs button.active {
+            color: #2d7cff;
+            border-bottom-color: #2d7cff;
+        }
+        .auth-form {
+            display: none;
+        }
+        .auth-form.active {
+            display: block;
+        }
+        .auth-form input {
+            width: 100%;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            border: 2px solid #e8ecf0;
+            border-radius: 14px;
+            font-size: 15px;
+            background: #f8f9fa;
+            transition: .2s;
+        }
+        .auth-form input:focus {
+            border-color: #2d7cff;
+            outline: none;
+            background: #fff;
+        }
+        .auth-form button {
+            width: 100%;
+            padding: 16px;
+            background: #2d7cff;
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .2s;
+        }
+        .auth-form button:hover {
+            background: #1a5fd9;
+            transform: translateY(-2px);
+        }
+        .auth-form .error-msg {
+            color: #ff5252;
+            font-size: 13px;
+            margin-top: -8px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        /* ========== APP HEADER ========== */
+        #appContainer {
+            display: none;
+            padding-top: 4px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            padding: 4px 0;
+        }
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+        }
+        .logo h1 span {
+            background: #2d7cff;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 8px;
+            font-size: 26px;
+        }
+        .logo p {
+            margin-top: 2px;
+            font-size: 10px;
+            letter-spacing: 0.8px;
+            color: #7b87a8;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .header-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .add-btn,
+        .request-btn,
+        .logout-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: #fff;
+            border-radius: 12px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: .25s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .06);
+        }
+        .add-btn {
+            color: #2d7cff;
+        }
+        .request-btn {
+            font-size: 16px;
+            color: #f1c40f;
+        }
+        .logout-btn {
+            font-size: 15px;
+            color: #ff5252;
+        }
+        .add-btn:hover,
+        .request-btn:hover,
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, .10);
+        }
+
+        /* ========== BANNER ========== */
+        .banner {
+            margin-top: 6px;
+            background: #132d63;
+            border-radius: 18px;
+            padding: 20px 22px 22px;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .banner::after {
+            content: '';
+            position: absolute;
+            right: -30px;
+            top: -30px;
+            width: 130px;
+            height: 130px;
+            background: rgba(255, 255, 255, .04);
+            border-radius: 50%;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 14px;
+            background: #2d7cff;
+            border-radius: 50px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            margin-bottom: 14px;
+        }
+        .banner h2 {
+            font-size: 24px;
+            line-height: 1.25;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        .banner p {
+            margin-top: 10px;
+            font-size: 13px;
+            opacity: .8;
+            letter-spacing: 0.3px;
+        }
+
+        /* ========== SECTION ========== */
+        .section {
+            margin-top: 24px;
+        }
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .section-title h3 {
+            font-size: 17px;
+            font-weight: 700;
+            border-left: 5px solid #2d7cff;
+            padding-left: 10px;
+        }
+        .section-title a {
+            font-size: 12px;
+            text-decoration: none;
+            color: #2d7cff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* ========== PLAYLIST GRID ========== */
+        .playlist-grid {
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            scrollbar-width: none;
+        }
+        .playlist-grid::-webkit-scrollbar {
+            display: none;
+        }
+        .playlist-card {
+            min-width: 140px;
+            background: #fff;
+            border-radius: 16px;
+            padding: 10px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .06);
+            cursor: pointer;
+            transition: .2s;
+            flex-shrink: 0;
+        }
+        .playlist-card:hover {
+            transform: translateY(-4px);
+        }
+        .playlist-card img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            background: #ddd;
+        }
+        .playlist-card h4 {
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .playlist-card p {
+            font-size: 11px;
+            color: #7b87a8;
+            margin-top: 2px;
+        }
+        .playlist-actions {
+            display: none;
+            gap: 6px;
+            margin-top: 8px;
+            justify-content: flex-end;
+        }
+        .owner-mode .playlist-actions {
+            display: flex;
+        }
+        .playlist-actions button {
+            width: 26px;
+            height: 26px;
+            border: none;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 11px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: .2s;
+        }
+        .playlist-actions button:hover {
+            transform: scale(1.1);
+        }
+        .playlist-edit-btn {
+            background: #f39c12;
+        }
+        .playlist-delete-btn {
+            background: #ff5252;
+        }
+
+        .new-playlist {
+            min-width: 140px;
+            height: 170px;
+            border: 3px dashed #2d7cff;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #2d7cff;
+            background: #fff;
+            cursor: pointer;
+            transition: .2s;
+            flex-shrink: 0;
+        }
+        .new-playlist:hover {
+            background: #f0f6ff;
+        }
+        .new-playlist .plus {
+            font-size: 48px;
+            font-weight: bold;
+        }
+        .new-playlist span {
+            font-size: 13px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+        .new-playlist .owner-tag {
+            font-size: 9px;
+            background: #2d7cff;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 50px;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        /* ========== SONG LIST ========== */
+        .song-title {
+            margin-top: 26px;
+            font-size: 17px;
+            font-weight: 700;
+            border-left: 5px solid #2d7cff;
+            padding-left: 10px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .back-link {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2d7cff;
+            cursor: pointer;
+            border-left: none;
+            padding-left: 0;
+        }
+
+        #searchBox {
+            width: 100%;
+            padding: 13px 16px;
+            border: none;
+            border-radius: 14px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, .05);
+        }
+
+        .song-list {
+            list-style: none;
+        }
+        .song-item {
+            background: #fff;
+            border-radius: 14px;
+            padding: 11px 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, .04);
+            cursor: pointer;
+            transition: .2s;
+        }
+        .song-item:hover {
+            transform: translateY(-2px);
+        }
+        .song-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+        .song-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #2d7cff;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .song-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .song-info h5 {
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .song-info span {
+            font-size: 11px;
+            color: #888;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .song-actions {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+        .edit-btn,
+        .delete-btn {
+            display: none !important;
+        }
+        .owner-mode .edit-btn,
+        .owner-mode .delete-btn {
+            display: flex !important;
+        }
+        .song-actions button {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: .2s;
+        }
+        .song-actions button:hover {
+            transform: scale(1.05);
+        }
+        .edit-btn {
+            background: #f39c12 !important;
+        }
+        .delete-btn {
+            background: #ff5252 !important;
+        }
+        .play-btn {
+            background: #2d7cff !important;
+            display: flex !important;
+        }
+        .favorite-btn {
+            background: transparent !important;
+            color: #f1c40f !important;
+            font-size: 18px !important;
+            width: 30px !important;
+            height: 30px !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            border: none !important;
+            cursor: pointer;
+            transition: .2s;
+        }
+        .favorite-btn:hover {
+            transform: scale(1.2);
+        }
+        .favorite-btn.favorited {
+            color: #f1c40f !important;
+            text-shadow: 0 0 10px #f1c40f80;
+        }
+
+        /* ========== OWNER PANEL ========== */
+        #ownerPanel {
+            margin-top: 24px;
+            background: white;
+            padding: 18px 18px 22px;
+            border-radius: 18px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .06);
+        }
+        #ownerPanel h2 {
+            margin-bottom: 16px;
+            color: #2d7cff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+        }
+        #ownerPanel h2 .badge-owner {
+            background: #2d7cff;
+            color: white;
+            font-size: 10px;
+            padding: 2px 12px;
+            border-radius: 50px;
+        }
+        #ownerPanel input,
+        #ownerPanel select {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #f8f9fa;
+        }
+        #ownerPanel input:focus,
+        #ownerPanel select:focus {
+            border-color: #2d7cff;
+            outline: none;
+            background: white;
+        }
+        #ownerPanel .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        #ownerPanel .btn-group button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .2s;
+            min-width: 70px;
+            font-size: 13px;
+        }
+        #ownerPanel .btn-group button:hover {
+            transform: translateY(-2px);
+        }
+        #addBtn {
+            background: #2d7cff;
+            color: white;
+        }
+        #clearBtn {
+            background: #ff5252;
+            color: white;
+        }
+        #resetDefaultBtn {
+            background: #444;
+            color: white;
+        }
+
+        .edit-music-panel {
+            margin-top: 14px;
+            padding: 14px 16px;
+            background: #fff8e1;
+            border-radius: 12px;
+            border: 2px solid #f39c12;
+        }
+        .edit-music-panel h4 {
+            color: #f39c12;
+            font-size: 13px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .edit-music-panel select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 10px;
+            background: white;
+        }
+        .edit-music-panel .btn-edit-music {
+            width: 100%;
+            padding: 10px;
+            background: #f39c12;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .2s;
+        }
+        .edit-music-panel .btn-edit-music:hover {
+            background: #d68910;
+            transform: translateY(-2px);
+        }
+
+        .spotify-link-hint {
+            font-size: 11px;
+            color: #888;
+            margin-top: -6px;
+            margin-bottom: 12px;
+            padding: 6px 12px;
+            background: #f0f6ff;
+            border-radius: 8px;
+            border-left: 3px solid #2d7cff;
+        }
+        .spotify-link-hint code {
+            background: #e8ecf0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #2d7cff;
+        }
+
+        /* ========== REQUEST ========== */
+        .request-item {
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #f1c40f;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .04);
+            transition: .2s;
+        }
+        .request-item:hover {
+            transform: translateX(4px);
+        }
+        .request-item .req-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .request-item .req-info .req-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1d2b53;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .request-item .req-info .req-artist {
+            font-size: 11px;
+            color: #888;
+            display: block;
+        }
+        .request-item .req-info .req-time {
+            font-size: 10px;
+            color: #aaa;
+            display: block;
+            margin-top: 2px;
+        }
+        .req-status {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 50px;
+            font-size: 9px;
+            font-weight: 700;
+            margin-left: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .req-status.pending {
+            background: #f1c40f20;
+            color: #f1c40f;
+            border: 1px solid #f1c40f;
+        }
+        .req-status.accepted {
+            background: #2d7cff20;
+            color: #2d7cff;
+            border: 1px solid #2d7cff;
+        }
+        .req-status.rejected {
+            background: #ff525220;
+            color: #ff5252;
+            border: 1px solid #ff5252;
+        }
+        .request-item .req-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+            align-items: center;
+        }
+        .request-item .req-actions button {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: .2s;
+        }
+        .request-item .req-actions button:hover {
+            transform: scale(1.1);
+        }
+        .req-accept {
+            background: #2d7cff;
+            color: white;
+        }
+        .req-reject {
+            background: #ff5252;
+            color: white;
+        }
+        .req-delete {
+            background: #888;
+            color: white;
+        }
+        .request-empty {
+            text-align: center;
+            padding: 24px 20px;
+            color: #7b87a8;
+            font-size: 13px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        .request-empty .icon {
+            font-size: 36px;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .req-badge {
+            display: inline-block;
+            background: #f1c40f;
+            color: #1d2b53;
+            padding: 2px 12px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-left: 6px;
+        }
+        .user-request-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .04);
+            border-left: 4px solid #f1c40f;
+            transition: .2s;
+        }
+        .user-request-card:hover {
+            transform: translateX(4px);
+        }
+        .user-request-card .req-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .user-request-card .req-title {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .user-request-card .req-artist {
+            font-size: 12px;
+            color: #888;
+        }
+        .user-request-card .req-time {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 2px;
+        }
+        .user-request-card .req-status-big {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 50px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+        }
+        .user-request-card .req-status-big.pending {
+            background: #f1c40f20;
+            color: #f1c40f;
+            border: 1px solid #f1c40f;
+        }
+        .user-request-card .req-status-big.accepted {
+            background: #2d7cff20;
+            color: #2d7cff;
+            border: 1px solid #2d7cff;
+        }
+        .user-request-card .req-status-big.rejected {
+            background: #ff525220;
+            color: #ff5252;
+            border: 1px solid #ff5252;
+        }
+        .user-request-card .req-desc {
+            font-size: 11px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* ========== KOLEKSI ========== */
+        #koleksiSection .koleksi-title {
+            font-size: 18px;
+            font-weight: 700;
+            border-left: 5px solid #f1c40f;
+            padding-left: 10px;
+            margin-bottom: 14px;
+        }
+        .koleksi-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .koleksi-card {
+            background: #fff;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, .04);
+            cursor: pointer;
+            transition: .2s;
+        }
+        .koleksi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, .08);
+        }
+        .koleksi-card .card-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            background: #ddd;
+        }
+        .koleksi-card .card-body {
+            padding: 10px 12px 12px;
+        }
+        .koleksi-card .card-body h4 {
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .koleksi-card .card-body .artist {
+            font-size: 11px;
+            color: #888;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .koleksi-card .card-body .genre-tag {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 600;
+            background: #2d7cff20;
+            color: #2d7cff;
+            padding: 2px 8px;
+            border-radius: 50px;
+            margin-top: 4px;
+        }
+        .koleksi-card .card-body .playlist-source {
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 4px;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .koleksi-card .card-body .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .koleksi-card .card-body .play-btn-small {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            background: #2d7cff;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: .2s;
+        }
+        .koleksi-card .card-body .play-btn-small:hover {
+            transform: scale(1.1);
+        }
+        .koleksi-card .card-body .favorite-btn-small {
+            background: transparent !important;
+            border: none !important;
+            font-size: 20px !important;
+            color: #f1c40f !important;
+            cursor: pointer;
+            transition: .2s;
+            padding: 0 4px;
+        }
+        .koleksi-card .card-body .favorite-btn-small:hover {
+            transform: scale(1.2);
+        }
+        .koleksi-card .card-body .favorite-btn-small.favorited {
+            text-shadow: 0 0 10px #f1c40f80;
+        }
+        .koleksi-empty {
+            text-align: center;
+            padding: 32px 20px;
+            color: #7b87a8;
+            grid-column: 1/-1;
+        }
+        .koleksi-empty .icon {
+            font-size: 40px;
+            margin-bottom: 6px;
+        }
+        .koleksi-empty p {
+            font-size: 14px;
+        }
+
+        /* ========== SPOTIFY PLAYER ========== */
+        #spotifyContainer {
+            margin-top: 16px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, .04);
+        }
+        #spotifyContainer iframe {
+            display: block;
+            width: 100%;
+            height: 152px;
+            border: 0;
+        }
+
+        /* ========== EMPTY STATE ========== */
+        .empty-state {
+            text-align: center;
+            padding: 28px 20px;
+            color: #7b87a8;
+        }
+        .empty-state .icon {
+            font-size: 40px;
+            margin-bottom: 6px;
+        }
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* ========== MODAL ========== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        .modal-overlay .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 28px 22px 30px;
+            max-width: 380px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        }
+        .modal-overlay h3 {
+            margin-bottom: 18px;
+            color: #2d7cff;
+            font-size: 20px;
+        }
+        .modal-overlay input {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+        .modal-overlay .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .modal-overlay .modal-buttons button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .modal-primary {
+            background: #2d7cff;
+            color: white;
+        }
+        .modal-secondary {
+            background: #ddd;
+            color: #333;
+        }
+        .file-label {
+            display: block;
+            background: #f5f7fa;
+            cursor: pointer;
+            text-align: center;
+            color: #7b87a8;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            transition: .2s;
+        }
+        .file-label:hover {
+            background: #e8ecf5;
+        }
+        .file-label input[type="file"] {
+            display: none;
+        }
+        .preview-img {
+            width: 100%;
+            max-height: 180px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: none;
+        }
+        .preview-img.show {
+            display: block;
+        }
+
+        /* ========== NOTIFICATION ========== */
+        #notification {
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 14px;
+            background: #ff5252;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 8px 30px rgba(255, 82, 82, 0.35);
+            z-index: 99999;
+            opacity: 0;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            transform: translateX(-50%) translateY(-30px);
+            pointer-events: none;
+            max-width: 90%;
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+        }
+        #notification.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        #notification.success {
+            background: #2d7cff;
+            box-shadow: 0 8px 30px rgba(45, 124, 255, 0.35);
+        }
+        #notification.warning {
+            background: #ff5252;
+            box-shadow: 0 8px 30px rgba(255, 82, 82, 0.35);
+        }
+
+        /* ========== BOTTOM NAV ========== */
+        .bottom-nav {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 0;
+            width: 100%;
+            max-width: 480px;
+            background: #fff;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 12px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, .06);
+            z-index: 100;
+            border-radius: 20px 20px 0 0;
+        }
+        .bottom-nav button {
+            background: none;
+            border: none;
+            font-size: 11px;
+            font-weight: 600;
+            color: #6f7c9b;
+            cursor: pointer;
+            text-align: center;
+            line-height: 1.2;
+            padding: 4px 0;
+        }
+        .bottom-nav button.active {
+            color: #2d7cff;
+        }
+        .bottom-nav button span {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        /* ========== MISC ========== */
+        .hidden {
+            display: none !important;
+        }
+        #requestSection {
+            display: none;
+            margin-top: 16px;
+        }
+        #requestSection.active {
+            display: block;
+        }
+
+        #passwordModal input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .confirm-modal .modal-content {
+            max-width: 340px;
+        }
+        .confirm-modal .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .confirm-modal .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+        .confirm-modal .modal-buttons .btn-confirm-ok {
+            background: #ff5252;
+            color: white;
+        }
+        .confirm-modal .modal-buttons .btn-confirm-cancel {
+            background: #ddd;
+            color: #333;
+        }
+        .confirm-modal .modal-icon {
+            font-size: 44px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .confirm-modal .modal-text {
+            text-align: center;
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .status-modal .modal-content {
+            max-width: 340px;
+        }
+        .status-modal .status-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .status-modal .status-title {
+            text-align: center;
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .status-modal .status-desc {
+            text-align: center;
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 14px;
+        }
+        .status-modal .status-badge-display {
+            text-align: center;
+            margin-bottom: 14px;
+        }
+        .status-modal .status-badge-display .req-status {
+            font-size: 13px;
+            padding: 4px 18px;
+        }
+
+        .dev-credit {
+            text-align: center;
+            padding: 16px 0 8px;
+            font-size: 11px;
+            color: #7b87a8;
+            letter-spacing: 0.4px;
+        }
+        .dev-credit span {
+            color: #2d7cff;
+            font-weight: 700;
+        }
+        .dev-credit .heart {
+            color: #ff5252;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NOTIFICATION -->
+    <div id="notification"></div>
+
+    <!-- ========== AUTH CONTAINER ========== -->
+    <div class="container" id="authContainer">
+        <h1>PLAY <span>MUSIK</span></h1>
+        <p class="sub">Login atau daftar untuk mulai</p>
+
+        <div class="auth-tabs">
+            <button class="active" data-tab="login">Login</button>
+            <button data-tab="register">Register</button>
+        </div>
+
+        <div class="auth-form active" id="loginForm">
+            <input type="email" id="loginEmail" placeholder="Email" />
+            <input type="password" id="loginPassword" placeholder="Password" />
+            <div id="loginError" class="error-msg"></div>
+            <button id="loginBtn">Login</button>
+        </div>
+
+        <div class="auth-form" id="registerForm">
+            <input type="email" id="registerEmail" placeholder="Email" />
+            <input type="password" id="registerPassword" placeholder="Password (min 6 karakter)" />
+            <div id="registerError" class="error-msg"></div>
+            <button id="registerBtn">Daftar</button>
+        </div>
+    </div>
+
+    <!-- ========== APP CONTAINER ========== -->
+    <div class="container" id="appContainer">
+
+        <div class="header">
+            <div class="logo">
+                <h1>PLAY <span>MUSIK</span></h1>
+                <p id="userEmailDisplay">user@email.com</p>
+            </div>
+            <div class="header-actions">
+                <button class="request-btn" id="requestBtn">📩</button>
+                <button class="add-btn" id="toggleOwnerBtn">+</button>
+                <button class="logout-btn" id="logoutBtn">🚪</button>
+            </div>
+        </div>
+
+        <div class="banner">
+            <div class="badge">🎧 MUSIK MODE</div>
+            <h2>PUTAR TERUS,<br />TANPA BATAS.</h2>
+            <p><span id="trackCount">0 Lagu</span> • <span id="playlistCount">0 Playlist</span></p>
+        </div>
+
+        <div id="homeSection">
+            <div class="section">
+                <div class="section-title">
+                    <h3>PLAYLIST KAMU</h3>
+                    <a id="viewAll">Lihat Semua</a>
+                </div>
+                <div class="playlist-grid" id="playlistGrid"></div>
+            </div>
+            <div class="song-title" id="songTitleContainer">
+                <span id="songTitle">SEMUA LAGU</span>
+                <span id="backLink" class="back-link hidden">← Kembali</span>
+            </div>
+            <input id="searchBox" type="text" placeholder="Cari lagu..." />
+            <ul class="song-list" id="playlist"></ul>
+        </div>
+
+        <div id="requestSection">
+            <div class="section">
+                <div class="section-title">
+                    <h3 style="border-left-color:#f1c40f;">📩 REQUEST SAYA</h3>
+                    <span style="font-size:12px;color:#888;" id="requestCountUser">0 request</span>
+                </div>
+                <div id="userRequestList"></div>
+            </div>
+        </div>
+
+        <div id="koleksiSection" class="hidden">
+            <div class="koleksi-title">⭐ LAGU FAVORIT</div>
+            <div class="koleksi-grid" id="koleksiGrid"></div>
+        </div>
+
+        <div id="spotifyContainer" class="hidden">
+            <iframe id="spotifyIframe" src="" width="100%" height="152" frameborder="0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media;"></iframe>
+        </div>
+
+        <div id="ownerPanel" class="hidden">
+            <h2>🔑 OWNER PANEL <span class="badge-owner">OWNER</span></h2>
+
+            <h4 style="color:#2d7cff;margin-bottom:8px;font-size:14px;">➕ Tambah Lagu</h4>
+            <select id="playlistSelect"><option value="">Pilih Playlist tujuan...</option></select>
+            <input id="inputTitle" placeholder="Judul Lagu" />
+            <input id="inputArtist" placeholder="Artis" />
+            <input id="inputGenre" placeholder="Genre" />
+            <input id="inputUrl" placeholder="https://open.spotify.com/track/..." />
+            <div class="spotify-link-hint">
+                💡 <b>Tips:</b> Copy link dari Spotify, semua format support!<br />
+                Contoh: <code>https://open.spotify.com/track/5tZaKZPJtiHh6teQfVEHB5</code>
+            </div>
+            <button id="addBtn">➕ Tambah Lagu</button>
+
+            <div class="edit-music-panel">
+                <h4>✎ Edit Lagu yang Sudah Ada</h4>
+                <select id="editSongSelect"><option value="">Pilih Lagu...</option></select>
+                <button class="btn-edit-music" id="editExistingSongBtn">✎ Edit Lagu</button>
+            </div>
+
+            <div class="btn-group">
+                <button id="clearBtn">🗑️ Hapus Semua</button>
+                <button id="resetDefaultBtn">🔄 Reset</button>
+            </div>
+
+            <div style="margin-top:20px; border-top:2px dashed #ddd; padding-top:16px;">
+                <h3 style="color:#f1c40f; margin-bottom:12px; font-size:15px;">
+                    📩 Request Member
+                    <span class="req-badge" id="requestCount">0</span>
+                </h3>
+                <div id="requestList"></div>
+            </div>
+        </div>
+
+        <div class="dev-credit"><span class="heart">❤</span> DEV By <span>LummXD</span> <span class="heart">❤</span></div>
+        <div style="height:80px;"></div>
+
+        <div class="bottom-nav">
+            <button class="active" id="navHome"><span>🏠</span>HOME</button>
+            <button id="navKoleksi"><span>⭐</span>FAVORIT</button>
+            <button id="navRequests"><span>📩</span>REQUEST</button>
+            <button id="ownerToggle"><span>🔑</span>OWNER</button>
+        </div>
+    </div>
+
+    <!-- ========== MODALS ========== -->
+    <div id="passwordModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>🔑 Masukkan Password Owner</h3>
+            <input id="passwordInput" type="password" placeholder="Password..." autofocus />
+            <div class="modal-buttons">
+                <button id="passwordConfirmBtn" class="modal-primary">Masuk</button>
+                <button id="passwordCancelBtn" class="modal-secondary">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="requestModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>📩 Request Lagu</h3>
+            <p style="font-size:13px;color:#888;margin-bottom:14px;">Kirim request lagu ke Owner</p>
+            <input id="reqJudul" placeholder="Judul Lagu" autofocus />
+            <input id="reqArtis" placeholder="Artis / Band" />
+            <div class="modal-buttons">
+                <button id="requestConfirmBtn" class="modal-primary">Kirim Request</button>
+                <button id="requestCancelBtn" class="modal-secondary">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editSongModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>✎ Edit Lagu</h3>
+            <input id="editSongTitle" placeholder="Judul Lagu" />
+            <input id="editSongArtist" placeholder="Artis" />
+            <input id="editSongGenre" placeholder="Genre" />
+            <input id="editSongUrl" placeholder="https://open.spotify.com/track/..." />
+            <div class="modal-buttons">
+                <button id="editSongConfirmBtn" class="modal-primary">Simpan</button>
+                <button id="editSongCancelBtn" class="modal-secondary">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editPlaylistModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>✎ Edit Playlist</h3>
+            <input id="editPlaylistName" placeholder="Nama Playlist" />
+            <label class="file-label" for="editPlaylistFile">📷 Ganti Gambar Cover<input type="file" id="editPlaylistFile" accept="image/*" /></label>
+            <img id="editPlaylistPreview" class="preview-img" alt="Preview" />
+            <div class="modal-buttons">
+                <button id="editPlaylistConfirmBtn" class="modal-primary">Simpan</button>
+                <button id="editPlaylistCancelBtn" class="modal-secondary">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalOverlay" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="modalTitle">Buat Playlist Baru</h3>
+            <input id="modalInputName" placeholder="Nama Playlist" />
+            <label class="file-label" for="modalFileInput">📷 Pilih Gambar Cover (dari galeri)<input type="file" id="modalFileInput" accept="image/*" /></label>
+            <img id="modalPreviewImg" class="preview-img" alt="Preview Gambar" />
+            <div class="modal-buttons">
+                <button id="modalConfirmBtn" class="modal-primary">Simpan</button>
+                <button id="modalCancelBtn" class="modal-secondary">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal-overlay confirm-modal hidden">
+        <div class="modal-content">
+            <div class="modal-icon">🗑️</div>
+            <h3 id="confirmTitle" style="text-align:center;">Hapus?</h3>
+            <p id="confirmText" class="modal-text">Yakin mau hapus ini?</p>
+            <div class="modal-buttons">
+                <button id="confirmOkBtn" class="btn-confirm-ok">Hapus</button>
+                <button id="confirmCancelBtn" class="btn-confirm-cancel">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="statusModal" class="modal-overlay status-modal hidden">
+        <div class="modal-content">
+            <div class="status-icon" id="statusIcon">📩</div>
+            <h3 class="status-title" id="statusTitle">Status Request</h3>
+            <div class="status-badge-display" id="statusBadgeDisplay"></div>
+            <p class="status-desc" id="statusDesc">Menunggu respon dari Owner</p>
+            <div class="modal-buttons">
+                <button id="statusCloseBtn" class="modal-primary">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 🔧 FIREBASE CONFIG
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFjYZMN2KlXHUem03HzI0ZmuGqtIoVnvc",
+            authDomain: "lummxd-7d751.firebaseapp.com",
+            projectId: "lummxd-7d751",
+            storageBucket: "lummxd-7d751.firebasestorage.app",
+            messagingSenderId: "759391888813",
+            appId: "1:759391888813:web:b7bda347917b97138cad24",
+            measurementId: "G-VLFE0FVVGG"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ============================================================
+        // STATE
+        // ============================================================
+        let currentUser = null;
+        let data = { playlists: [] };
+        let currentPlaylistId = null;
+        let currentSearch = '';
+        let isOwnerMode = false;
+        let currentPage = 'home';
+        let favorites = [];
+        let songRequests = [];
+        let editingSongId = null;
+        let editingPlaylistId = null;
+        let confirmCallback = null;
+        let tempImageData = null;
+
+        // DOM refs
+        const authContainer = document.getElementById('authContainer');
+        const appContainer = document.getElementById('appContainer');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginError = document.getElementById('loginError');
+        const registerEmail = document.getElementById('registerEmail');
+        const registerPassword = document.getElementById('registerPassword');
+        const registerError = document.getElementById('registerError');
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userEmailDisplay = document.getElementById('userEmailDisplay');
+
+        const body = document.body;
+        const playlistGrid = document.getElementById('playlistGrid');
+        const songList = document.getElementById('playlist');
+        const songTitle = document.getElementById('songTitle');
+        const backLink = document.getElementById('backLink');
+        const trackCount = document.getElementById('trackCount');
+        const playlistCount = document.getElementById('playlistCount');
+        const searchBox = document.getElementById('searchBox');
+        const homeSection = document.getElementById('homeSection');
+        const requestSection = document.getElementById('requestSection');
+        const userRequestList = document.getElementById('userRequestList');
+        const requestCountUser = document.getElementById('requestCountUser');
+        const koleksiSection = document.getElementById('koleksiSection');
+        const koleksiGrid = document.getElementById('koleksiGrid');
+        const ownerPanel = document.getElementById('ownerPanel');
+        const playlistSelect = document.getElementById('playlistSelect');
+        const inputTitle = document.getElementById('inputTitle');
+        const inputArtist = document.getElementById('inputArtist');
+        const inputGenre = document.getElementById('inputGenre');
+        const inputUrl = document.getElementById('inputUrl');
+        const addBtn = document.getElementById('addBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const resetDefaultBtn = document.getElementById('resetDefaultBtn');
+        const ownerToggle = document.getElementById('ownerToggle');
+        const toggleOwnerBtn = document.getElementById('toggleOwnerBtn');
+        const viewAll = document.getElementById('viewAll');
+        const navHome = document.getElementById('navHome');
+        const navKoleksi = document.getElementById('navKoleksi');
+        const navRequests = document.getElementById('navRequests');
+        const requestBtn = document.getElementById('requestBtn');
+        const requestModal = document.getElementById('requestModal');
+        const reqJudul = document.getElementById('reqJudul');
+        const reqArtis = document.getElementById('reqArtis');
+        const requestConfirmBtn = document.getElementById('requestConfirmBtn');
+        const requestCancelBtn = document.getElementById('requestCancelBtn');
+        const requestList = document.getElementById('requestList');
+        const requestCount = document.getElementById('requestCount');
+        const spotifyContainer = document.getElementById('spotifyContainer');
+        const spotifyIframe = document.getElementById('spotifyIframe');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalInputName = document.getElementById('modalInputName');
+        const modalFileInput = document.getElementById('modalFileInput');
+        const modalPreviewImg = document.getElementById('modalPreviewImg');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+        const editSongModal = document.getElementById('editSongModal');
+        const editSongTitle = document.getElementById('editSongTitle');
+        const editSongArtist = document.getElementById('editSongArtist');
+        const editSongGenre = document.getElementById('editSongGenre');
+        const editSongUrl = document.getElementById('editSongUrl');
+        const editSongConfirmBtn = document.getElementById('editSongConfirmBtn');
+        const editSongCancelBtn = document.getElementById('editSongCancelBtn');
+        const editPlaylistModal = document.getElementById('editPlaylistModal');
+        const editPlaylistName = document.getElementById('editPlaylistName');
+        const editPlaylistFile = document.getElementById('editPlaylistFile');
+        const editPlaylistPreview = document.getElementById('editPlaylistPreview');
+        const editPlaylistConfirmBtn = document.getElementById('editPlaylistConfirmBtn');
+        const editPlaylistCancelBtn = document.getElementById('editPlaylistCancelBtn');
+        const editSongSelect = document.getElementById('editSongSelect');
+        const editExistingSongBtn = document.getElementById('editExistingSongBtn');
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmTitle = document.getElementById('confirmTitle');
+        const confirmText = document.getElementById('confirmText');
+        const confirmOkBtn = document.getElementById('confirmOkBtn');
+        const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+        const statusModal = document.getElementById('statusModal');
+        const statusIcon = document.getElementById('statusIcon');
+        const statusTitle = document.getElementById('statusTitle');
+        const statusDesc = document.getElementById('statusDesc');
+        const statusBadgeDisplay = document.getElementById('statusBadgeDisplay');
+        const statusCloseBtn = document.getElementById('statusCloseBtn');
+        const passwordModal = document.getElementById('passwordModal');
+        const passwordInput = document.getElementById('passwordInput');
+        const passwordConfirmBtn = document.getElementById('passwordConfirmBtn');
+        const passwordCancelBtn = document.getElementById('passwordCancelBtn');
+        const notificationEl = document.getElementById('notification');
+
+        let notificationTimeout = null;
+
+        // ============================================================
+        // HELPER FUNCTIONS
+        // ============================================================
+        function showNotification(msg, type) {
+            if (notificationTimeout) { clearTimeout(notificationTimeout);
+                notificationEl.classList.remove('show'); }
+            notificationEl.textContent = msg;
+            notificationEl.className = '';
+            if (type === 'success') notificationEl.classList.add('success');
+            else notificationEl.classList.add('warning');
+            requestAnimationFrame(() => notificationEl.classList.add('show'));
+            notificationTimeout = setTimeout(() => notificationEl.classList.remove('show'), 3000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function generateId() { return Date.now() + Math.random() * 10000; }
+
+        function extractSpotifyId(url) {
+            if (!url || typeof url !== 'string') return '';
+            let cleanUrl = url.split('?')[0];
+            let match = cleanUrl.match(/track\/([a-zA-Z0-9]+)/);
+            if (match) return match[1];
+            match = cleanUrl.match(/embed\/track\/([a-zA-Z0-9]+)/);
+            if (match) return match[1];
+            match = cleanUrl.match(/spotify:track:([a-zA-Z0-9]+)/);
+            if (match) return match[1];
+            match = cleanUrl.match(/\/([a-zA-Z0-9]{22})$/);
+            if (match) return match[1];
+            match = cleanUrl.match(/([a-zA-Z0-9]{22})/);
+            if (match && match[1].length === 22) return match[1];
+            return '';
+        }
+
+        function getSpotifyEmbedUrl(url) {
+            const id = extractSpotifyId(url);
+            if (!id) return '';
+            return `https://open.spotify.com/embed/track/${id}`;
+        }
+
+        function getPlaylist(id) {
+            return data.playlists.find(p => p.id === id) || null;
+        }
+
+        function getAllSongs() {
+            let all = [];
+            data.playlists.forEach(p => {
+                p.songs.forEach(s => {
+                    all.push({ ...s, playlistId: p.id, playlistName: p.name });
+                });
+            });
+            return all;
+        }
+
+        function showConfirm(title, text, callback) {
+            confirmTitle.textContent = title;
+            confirmText.textContent = text;
+            confirmCallback = callback;
+            confirmModal.classList.remove('hidden');
+        }
+
+        function closeConfirm() {
+            confirmModal.classList.add('hidden');
+            confirmCallback = null;
+        }
+        confirmOkBtn.addEventListener('click', function() { if (confirmCallback) confirmCallback();
+            closeConfirm(); });
+        confirmCancelBtn.addEventListener('click', closeConfirm);
+
+        function showStatusModal(status, judul, artis) {
+            const statusMap = {
+                'pending': { icon: '⏳', title: 'Menunggu Respon', desc: 'Request kamu menunggu konfirmasi dari Owner',
+                    badge: 'PENDING' },
+                'accepted': { icon: '✅', title: 'Diterima! 🎉',
+                    desc: 'Request kamu sudah diterima! Owner akan segera menambahkan ke playlist.',
+                    badge: 'ACCEPTED' },
+                'rejected': { icon: '❌', title: 'Ditolak',
+                    desc: 'Maaf, request kamu ditolak oleh Owner. Coba request lagu lain!', badge: 'REJECTED' }
+            };
+            const info = statusMap[status] || statusMap['pending'];
+            statusIcon.textContent = info.icon;
+            statusTitle.textContent = info.title;
+            statusDesc.textContent = info.desc;
+            statusBadgeDisplay.innerHTML = `<span class="req-status ${status}">${info.badge}</span>`;
+            statusModal.classList.remove('hidden');
+        }
+        statusCloseBtn.addEventListener('click', function() { statusModal.classList.add('hidden'); });
+
+        // ============================================================
+        // AUTH
+        // ============================================================
+        document.querySelectorAll('.auth-tabs button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.auth-tabs button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const tab = this.dataset.tab;
+                document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+                if (tab === 'login') loginForm.classList.add('active');
+                else registerForm.classList.add('active');
+                loginError.textContent = '';
+                registerError.textContent = '';
+            });
+        });
+
+        registerBtn.addEventListener('click', async function() {
+            const email = registerEmail.value.trim();
+            const pass = registerPassword.value.trim();
+            registerError.textContent = '';
+            if (!email || !pass) { registerError.textContent = 'Email dan password wajib diisi.'; return; }
+            if (pass.length < 6) { registerError.textContent = 'Password minimal 6 karakter.'; return; }
+            try {
+                await auth.createUserWithEmailAndPassword(email, pass);
+                showNotification('✅ Akun berhasil dibuat!', 'success');
+            } catch (err) {
+                registerError.textContent = err.message;
+            }
+        });
+
+        loginBtn.addEventListener('click', async function() {
+            const email = loginEmail.value.trim();
+            const pass = loginPassword.value.trim();
+            loginError.textContent = '';
+            if (!email || !pass) { loginError.textContent = 'Email dan password wajib diisi.'; return; }
+            try {
+                await auth.signInWithEmailAndPassword(email, pass);
+                showNotification('✅ Login berhasil!', 'success');
+            } catch (err) {
+                loginError.textContent = err.message;
+            }
+        });
+
+        logoutBtn.addEventListener('click', async function() {
+            await auth.signOut();
+        });
+
+        auth.onAuthStateChanged(async user => {
+            if (user) {
+                currentUser = user;
+                authContainer.style.display = 'none';
+                appContainer.style.display = 'block';
+                userEmailDisplay.textContent = user.email;
+                await initUserData();
+                passwordModal.classList.add('hidden');
+            } else {
+                currentUser = null;
+                authContainer.style.display = 'block';
+                appContainer.style.display = 'none';
+                data = { playlists: [] };
+                songRequests = [];
+                favorites = [];
+                isOwnerMode = false;
+                currentPage = 'home';
+                body.classList.remove('owner-mode');
+                ownerPanel.classList.add('hidden');
+            }
+        });
+
+        // ============================================================
+        // FIRESTORE
+        // ============================================================
+        async function initUserData() {
+            if (!currentUser) return;
+            const docRef = db.collection('users').doc(currentUser.uid);
+            try {
+                const doc = await docRef.get();
+                if (doc.exists) {
+                    const userData = doc.data();
+                    data = userData.data || { playlists: [] };
+                    songRequests = userData.requests || [];
+                    favorites = userData.favorites || [];
+                } else {
+                    data = getDefaultData();
+                    songRequests = [];
+                    favorites = [];
+                    await saveAllData();
+                }
+                renderAll();
+            } catch (err) {
+                console.error('Error loading data:', err);
+                showNotification('Gagal memuat data: ' + err.message);
+            }
+        }
+
+        async function saveAllData() {
+            if (!currentUser) return;
+            const docRef = db.collection('users').doc(currentUser.uid);
+            try {
+                await docRef.set({
+                    data: data,
+                    requests: songRequests,
+                    favorites: favorites,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch (err) {
+                console.error('Error saving data:', err);
+                showNotification('Gagal menyimpan data: ' + err.message);
+            }
+        }
+
+        function getDefaultData() {
+            return {
+                playlists: [{
+                    id: 1,
+                    name: '🔥 Pop Hits',
+                    image: 'https://picsum.photos/250/250?random=10',
+                    songs: [
+                        { id: 101, title: 'Blinding Lights', artist: 'The Weeknd', genre: 'Pop',
+                            url: 'https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT' },
+                        { id: 102, title: 'Shape of You', artist: 'Ed Sheeran', genre: 'Pop',
+                            url: 'https://open.spotify.com/track/3n3Ppam7vgaVa1iaRUc9Lp' },
+                        { id: 103, title: 'Starboy', artist: 'The Weeknd', genre: 'Pop',
+                            url: 'https://open.spotify.com/track/7MXVkk9YMctZqd1Srtv4MB' }
+                    ]
+                }, {
+                    id: 2,
+                    name: '🎸 Rock Classics',
+                    image: 'https://picsum.photos/250/250?random=11',
+                    songs: [
+                        { id: 201, title: 'Bohemian Rhapsody', artist: 'Queen', genre: 'Rock',
+                            url: 'https://open.spotify.com/track/2takcwOaAZWiXQijPHIx7B' },
+                        { id: 202, title: 'Smells Like Teen Spirit', artist: 'Nirvana', genre: 'Rock',
+                            url: 'https://open.spotify.com/track/1xK0t7IXkqC3PjaeUY2zGh' }
+                    ]
+                }, {
+                    id: 3,
+                    name: '🎤 Hip Hop',
+                    image: 'https://picsum.photos/250/250?random=12',
+                    songs: [
+                        { id: 301, title: 'Sicko Mode', artist: 'Travis Scott', genre: 'Hip Hop',
+                            url: 'https://open.spotify.com/track/2xLMifQCjDGFmkHkpNLD9h' },
+                        { id: 302, title: 'God\'s Plan', artist: 'Drake', genre: 'Hip Hop',
+                            url: 'https://open.spotify.com/track/6DCZcSspjsKoFjzjrWoCdn' }
+                    ]
+                }]
+            };
+        }
+
+        // ============================================================
+        // RENDER
+        // ============================================================
+        function updateCounts() {
+            const total = getAllSongs().length;
+            trackCount.textContent = total + ' Lagu';
+            playlistCount.textContent = data.playlists.length + ' Playlist';
+        }
+
+        function renderPlaylists() {
+            let html = '';
+            data.playlists.forEach(p => {
+                const imgSrc = p.image || 'https://picsum.photos/250/250?random=' + p.id;
+                html += `<div class="playlist-card" data-id="${p.id}" onclick="window._selectPlaylist(${p.id})">
+                        <img src="${imgSrc}" alt="${escapeHtml(p.name)}" onerror="this.src='https://picsum.photos/250/250?random=${p.id}'">
+                        <h4>${escapeHtml(p.name)}</h4>
+                        <p>${p.songs.length} Lagu</p>
+                        <div class="playlist-actions">
+                            <button class="playlist-edit-btn" onclick="event.stopPropagation(); window._editPlaylist(${p.id})">✎</button>
+                            <button class="playlist-delete-btn" onclick="event.stopPropagation(); window._deletePlaylist(${p.id})">✕</button>
+                        </div>
+                    </div>`;
+            });
+            html += `<div class="new-playlist" onclick="window._showCreatePlaylist()">
+                    <div class="plus">+</div>
+                    <span>Buat Baru</span>
+                    <div class="owner-tag">🔑 OWNER</div>
+                </div>`;
+            playlistGrid.innerHTML = html;
+            body.classList.toggle('owner-mode', isOwnerMode);
+        }
+
+        function renderSongList() {
+            let songs = [];
+            if (currentPlaylistId === null) {
+                songs = getAllSongs();
+                songTitle.textContent = 'SEMUA LAGU';
+                backLink.classList.add('hidden');
+            } else {
+                const p = getPlaylist(currentPlaylistId);
+                if (p) {
+                    songs = p.songs;
+                    songTitle.textContent = p.name.toUpperCase();
+                    backLink.classList.remove('hidden');
+                } else {
+                    songs = getAllSongs();
+                    songTitle.textContent = 'SEMUA LAGU';
+                    backLink.classList.add('hidden');
+                    currentPlaylistId = null;
+                }
+            }
+            if (currentSearch.trim()) {
+                const q = currentSearch.toLowerCase().trim();
+                songs = songs.filter(s =>
+                    s.title.toLowerCase().includes(q) ||
+                    s.artist.toLowerCase().includes(q) ||
+                    (s.genre && s.genre.toLowerCase().includes(q))
+                );
+            }
+            if (songs.length === 0) {
+                songList.innerHTML =
+                    `<div class="empty-state"><div class="icon">🎵</div><p>Belum ada lagu di sini.</p></div>`;
+                return;
+            }
+            let html = '';
+            songs.forEach((s, idx) => {
+                const fav = favorites.includes(s.id);
+                html += `<li class="song-item" onclick="window._playSong('${s.url}')">
+                        <div class="song-left">
+                            <div class="song-number">${idx + 1}</div>
+                            <div class="song-info">
+                                <h5>${escapeHtml(s.title)}</h5>
+                                <span>${escapeHtml(s.artist)}${s.genre ? ' • ' + escapeHtml(s.genre) : ''}</span>
+                            </div>
+                        </div>
+                        <div class="song-actions">
+                            <button class="favorite-btn ${fav ? 'favorited' : ''}" onclick="event.stopPropagation(); window._toggleFavorite(${s.id})">${fav ? '⭐' : '☆'}</button>
+                            <button class="play-btn" onclick="event.stopPropagation(); window._playSong('${s.url}')">▶</button>
+                            <button class="edit-btn" onclick="event.stopPropagation(); window._editSong(${s.id})">✎</button>
+                            <button class="delete-btn" onclick="event.stopPropagation(); window._deleteSong(${s.id})">✕</button>
+                        </div>
+                    </li>`;
+            });
+            songList.innerHTML = html;
+            body.classList.toggle('owner-mode', isOwnerMode);
+        }
+
+        function renderKoleksi() {
+            const favSongs = getAllSongs().filter(s => favorites.includes(s.id));
+            if (favSongs.length === 0) {
+                koleksiGrid.innerHTML =
+                    `<div class="koleksi-empty"><div class="icon">⭐</div><p>Belum ada lagu favorit.</p></div>`;
+                return;
+            }
+            let html = '';
+            favSongs.forEach(s => {
+                const imgSrc = s.image || 'https://picsum.photos/250/250?random=' + s.id;
+                html += `<div class="koleksi-card">
+                        <img class="card-img" src="${imgSrc}" onerror="this.src='https://picsum.photos/250/250?random=${s.id}'">
+                        <div class="card-body">
+                            <h4>${escapeHtml(s.title)}</h4>
+                            <span class="artist">${escapeHtml(s.artist)}</span>
+                            ${s.genre ? `<span class="genre-tag">${escapeHtml(s.genre)}</span>` : ''}
+                            <span class="playlist-source">📁 ${escapeHtml(s.playlistName || '')}</span>
+                            <div class="card-actions">
+                                <button class="play-btn-small" onclick="event.stopPropagation(); window._playSong('${s.url}')">▶</button>
+                                <button class="favorite-btn-small ${favorites.includes(s.id) ? 'favorited' : ''}" onclick="event.stopPropagation(); window._toggleFavorite(${s.id})">${favorites.includes(s.id) ? '⭐' : '☆'}</button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            koleksiGrid.innerHTML = html;
+        }
+
+        function renderRequests() {
+            if (songRequests.length === 0) {
+                requestList.innerHTML =
+                    `<div class="request-empty"><span class="icon">📭</span>Belum ada request dari member</div>`;
+                requestCount.textContent = '0';
+            } else {
+                let html = '';
+                songRequests.forEach(r => {
+                    const statusClass = r.status || 'pending';
+                    const statusLabel = statusClass === 'pending' ? '⏳ PENDING' :
+                        statusClass === 'accepted' ? '✅ DITERIMA' : '❌ DITOLAK';
+                    html += `<div class="request-item" style="border-left-color: ${statusClass === 'pending' ? '#f1c40f' : statusClass === 'accepted' ? '#2d7cff' : '#ff5252'}">
+                            <div class="req-info">
+                                <span class="req-title">🎵 ${escapeHtml(r.judul)} <span class="req-status ${statusClass}">${statusLabel}</span></span>
+                                <span class="req-artist">🎤 ${escapeHtml(r.artis)}</span>
+                                <span class="req-time">⏰ ${r.waktu || ''}</span>
+                            </div>
+                            <div class="req-actions">
+                                ${statusClass === 'pending' ? `
+                                    <button class="req-accept" onclick="window._acceptRequest(${r.id})" title="Terima">✅</button>
+                                    <button class="req-reject" onclick="window._rejectRequest(${r.id})" title="Tolak">❌</button>
+                                ` : ''}
+                                <button class="req-delete" onclick="window._deleteRequest(${r.id})" title="Hapus">✕</button>
+                            </div>
+                        </div>`;
+                });
+                requestList.innerHTML = html;
+                requestCount.textContent = songRequests.length;
+            }
+        }
+
+        function renderUserRequests() {
+            if (songRequests.length === 0) {
+                userRequestList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📭</div>
+                            <p>Belum ada request yang kamu kirim</p>
+                            <p style="font-size:13px;color:#888;margin-top:8px;">Klik tombol 📩 di atas untuk request lagu</p>
+                        </div>
+                    `;
+                requestCountUser.textContent = '0 request';
+            } else {
+                let html = '';
+                const reversed = [...songRequests].reverse();
+                reversed.forEach(r => {
+                    const statusClass = r.status || 'pending';
+                    const statusLabel = statusClass === 'pending' ? '⏳ Menunggu' :
+                        statusClass === 'accepted' ? '✅ Diterima' : '❌ Ditolak';
+                    const statusColor = statusClass === 'pending' ? '#f1c40f' :
+                        statusClass === 'accepted' ? '#2d7cff' : '#ff5252';
+                    const descText = statusClass === 'pending' ?
+                        '⏳ Owner akan segera merespon request kamu' :
+                        statusClass === 'accepted' ?
+                        '🎉 Selamat! Request kamu diterima. Owner akan menambahkan ke playlist.' :
+                        '😔 Maaf, request kamu ditolak. Coba request lagu lain ya!';
+                    html += `
+                            <div class="user-request-card" style="border-left-color: ${statusColor}">
+                                <div class="req-top">
+                                    <div>
+                                        <div class="req-title">🎵 ${escapeHtml(r.judul)}</div>
+                                        <div class="req-artist">🎤 ${escapeHtml(r.artis)}</div>
+                                        <div class="req-time">⏰ ${r.waktu || ''}</div>
+                                    </div>
+                                    <span class="req-status-big ${statusClass}">${statusLabel}</span>
+                                </div>
+                                <div class="req-desc">${descText}</div>
+                            </div>
+                        `;
+                });
+                userRequestList.innerHTML = html;
+                requestCountUser.textContent = songRequests.length + ' request';
+            }
+        }
+
+        function populatePlaylistSelect() {
+            let html = '<option value="">Pilih Playlist tujuan...</option>';
+            data.playlists.forEach(p => {
+                html += `<option value="${p.id}">${escapeHtml(p.name)}</option>`;
+            });
+            playlistSelect.innerHTML = html;
+        }
+
+        function populateEditSongSelect() {
+            const allSongs = getAllSongs();
+            let html = '<option value="">Pilih Lagu...</option>';
+            allSongs.forEach(s => {
+                html +=
+                    `<option value="${s.id}">${escapeHtml(s.title)} - ${escapeHtml(s.artist)} (${escapeHtml(s.playlistName || '')})</option>`;
+            });
+            editSongSelect.innerHTML = html;
+        }
+
+        function renderAll() {
+            renderPlaylists();
+            renderSongList();
+            renderKoleksi();
+            renderRequests();
+            renderUserRequests();
+            updateCounts();
+            populatePlaylistSelect();
+            populateEditSongSelect();
+        }
+
+        // ============================================================
+        // ACTIONS
+        // ============================================================
+        function selectPlaylist(id) {
+            currentPlaylistId = id;
+            currentSearch = '';
+            searchBox.value = '';
+            renderSongList();
+            updateCounts();
+            if (currentPage !== 'home') switchPage('home');
+        }
+        window._selectPlaylist = selectPlaylist;
+
+        function showAllSongs() {
+            currentPlaylistId = null;
+            currentSearch = '';
+            searchBox.value = '';
+            renderSongList();
+            updateCounts();
+        }
+        window._showAllSongs = showAllSongs;
+
+        function playSong(url) {
+            if (!url) { showNotification('⚠️ Tidak ada URL lagu!'); return; }
+            const embedUrl = getSpotifyEmbedUrl(url);
+            if (!embedUrl) {
+                showNotification('⚠️ Link Spotify tidak valid! Pastikan link benar.');
+                return;
+            }
+            spotifyIframe.src = embedUrl;
+            spotifyContainer.classList.remove('hidden');
+            spotifyContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        window._playSong = playSong;
+
+        function toggleFavorite(id) {
+            const idx = favorites.indexOf(id);
+            if (idx === -1) favorites.push(id);
+            else favorites.splice(idx, 1);
+            saveAllData();
+            if (currentPage === 'home') renderSongList();
+            else renderKoleksi();
+            updateCounts();
+        }
+        window._toggleFavorite = toggleFavorite;
+
+        function deleteSong(id) {
+            if (!isOwnerMode) { showNotification('⚠️ Hanya Owner!'); return; }
+            showConfirm('Hapus Lagu?', 'Yakin mau hapus lagu ini?', async function() {
+                let found = false;
+                data.playlists.forEach(p => {
+                    const idx = p.songs.findIndex(s => s.id === id);
+                    if (idx !== -1) { p.songs.splice(idx, 1);
+                        found = true; }
+                });
+                if (found) {
+                    await saveAllData();
+                    renderAll();
+                    showNotification('✅ Lagu dihapus!', 'success');
+                }
+            });
+        }
+        window._deleteSong = deleteSong;
+
+        function editSong(id) {
+            if (!isOwnerMode) { showNotification('⚠️ Hanya Owner!'); return; }
+            let song = null;
+            for (const p of data.playlists) {
+                const found = p.songs.find(s => s.id === id);
+                if (found) { song = found; break; }
+            }
+            if (!song) { showNotification('❌ Lagu tidak ditemukan!'); return; }
+            editingSongId = id;
+            editSongTitle.value = song.title || '';
+            editSongArtist.value = song.artist || '';
+            editSongGenre.value = song.genre || '';
+            editSongUrl.value = song.url || '';
+            editSongModal.classList.remove('hidden');
+        }
+        window._editSong = editSong;
+
+        function deletePlaylist(id) {
+            if (!isOwnerMode) { showNotification('⚠️ Hanya Owner!'); return; }
+            showConfirm('Hapus Playlist?', 'Semua lagu di dalamnya akan hilang!', async function() {
+                const idx = data.playlists.findIndex(p => p.id === id);
+                if (idx === -1) return;
+                data.playlists.splice(idx, 1);
+                if (currentPlaylistId === id) currentPlaylistId = null;
+                await saveAllData();
+                renderAll();
+                showNotification('✅ Playlist dihapus!', 'success');
+            });
+        }
+        window._deletePlaylist = deletePlaylist;
+
+        function editPlaylist(id) {
+            if (!isOwnerMode) { showNotification('⚠️ Hanya Owner!'); return; }
+            const p = getPlaylist(id);
+            if (!p) { showNotification('❌ Playlist tidak ditemukan!'); return; }
+            editingPlaylistId = id;
+            editPlaylistName.value = p.name || '';
+            editPlaylistPreview.src = p.image || '';
+            editPlaylistPreview.classList.toggle('show', !!p.image);
+            editPlaylistFile.value = '';
+            editPlaylistModal.classList.remove('hidden');
+        }
+        window._editPlaylist = editPlaylist;
+
+        function showCreatePlaylist() {
+            if (!isOwnerMode) {
+                showNotification('⚠️ Hanya Owner yang bisa menambahkan playlist!');
+                return;
+            }
+            modalTitle.textContent = 'Buat Playlist Baru';
+            modalInputName.value = '';
+            modalFileInput.value = '';
+            modalPreviewImg.classList.remove('show');
+            tempImageData = null;
+            modalOverlay.classList.remove('hidden');
+        }
+        window._showCreatePlaylist = showCreatePlaylist;
+
+        function saveNewPlaylist() {
+            const name = modalInputName.value.trim();
+            if (!name) { showNotification('⚠️ Nama playlist harus diisi!'); return; }
+            const newPlaylist = {
+                id: generateId(),
+                name: name,
+                image: tempImageData || 'https://picsum.photos/250/250?random=' + generateId(),
+                songs: []
+            };
+            data.playlists.push(newPlaylist);
+            saveAllData();
+            renderAll();
+            playlistSelect.value = newPlaylist.id;
+            showNotification('✅ Playlist "' + name + '" berhasil dibuat! Sekarang tambahkan lagu.', 'success');
+            closeModal();
+            inputTitle.focus();
+        }
+
+        function closeModal() {
+            modalOverlay.classList.add('hidden');
+            tempImageData = null;
+            modalPreviewImg.classList.remove('show');
+        }
+
+        // ============================================================
+        // REQUEST
+        // ============================================================
+        function addRequest(judul, artis) {
+            judul = judul.trim();
+            artis = artis.trim();
+            if (!judul || !artis) { showNotification('Judul dan Artis harus diisi!'); return false; }
+            const now = new Date();
+            const waktu = now.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit' });
+            songRequests.push({
+                id: generateId(),
+                judul,
+                artis,
+                waktu: waktu,
+                status: 'pending'
+            });
+            saveAllData();
+            renderRequests();
+            renderUserRequests();
+            showNotification('✅ Request berhasil dikirim! Cek status di tab REQUEST', 'success');
+            reqJudul.value = '';
+            reqArtis.value = '';
+            closeRequestModal();
+            showStatusModal('pending', judul, artis);
+            return true;
+        }
+
+        function acceptRequest(id) {
+            if (!isOwnerMode) { showNotification('⚠️ Hanya Owner!'); return; }
+            const req = songRequests.find(r => r.id === id);
+            if (!req) { showNotification('❌ Request tidak ditemukan!'); return; }
+            showConfirm('Terima Request?', `Yakin mau terima request "${req.judul}" dari ${req.artis}?`,
+            async function() {
+                req.status = 'accepted';
+                await saveAllData();
+                renderRequests();
+                renderUserRequests();
+                showNotification(`✅ Request "${req.judul}" diterima!`, 'success');
+                playlistSelect.value = '';
+                inputTitle.value = req.judul;
+                inputArtist.value = req.artis;
+                inputGenre.value = '';
+                inputUrl.value = '';
+                switchPage('owner');
+                showNotification('📝 Isi data lagu lalu klik Tambah Lagu', 'success');
+            });
+        }
+        window._acceptRequest = acceptRequest;
+
+        function rejectRequest(id) {
+            if (!isOwnerMode) { showNotification('⚠️ Hanya Owner!'); return; }
+            const req = songRequests.find(r => r.id === id);
+            if (!req) { showNotification('❌ Request tidak ditemukan!'); return; }
+            showConfirm('Tolak Request?', `Yakin mau tolak request "${req.judul}" dari ${req.artis}?`,
+            async function() {
+                req.status = 'rejected';
+                await saveAllData();
+                renderRequests();
+                renderUserRequests();
+                showNotification(`❌ Request "${req.judul}" ditolak`);
+            });
+        }
+        window._rejectRequest = rejectRequest;
+
+        function deleteRequest(id) {
+            if (!isOwnerMode) { showNotification('⚠️ Hanya Owner!'); return; }
+            const req = songRequests.find(r => r.id === id);
+            if (!req) { showNotification('❌ Request tidak ditemukan!'); return; }
+            showConfirm('Hapus Request?', `Yakin mau hapus request "${req.judul}"?`, async function() {
+                const idx = songRequests.findIndex(r => r.id === id);
+                if (idx === -1) return;
+                songRequests.splice(idx, 1);
+                await saveAllData();
+                renderRequests();
+                renderUserRequests();
+                showNotification('✅ Request dihapus!', 'success');
+            });
+        }
+        window._deleteRequest = deleteRequest;
+
+        // ============================================================
+        // OWNER MODE
+        // ============================================================
+        function toggleOwnerMode() {
+            if (isOwnerMode) {
+                isOwnerMode = false;
+                ownerPanel.classList.add('hidden');
+                body.classList.remove('owner-mode');
+                renderPlaylists();
+                renderSongList();
+                showNotification('🔒 Mode Owner dinonaktifkan', 'success');
+                return;
+            }
+            passwordModal.classList.remove('hidden');
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+
+        function confirmPassword() {
+            const input = passwordInput.value;
+            if (input === 'LummXD112') {
+                isOwnerMode = true;
+                ownerPanel.classList.remove('hidden');
+                body.classList.add('owner-mode');
+                renderPlaylists();
+                renderSongList();
+                populatePlaylistSelect();
+                renderRequests();
+                passwordModal.classList.add('hidden');
+                showNotification('🔓 Mode Owner diaktifkan!', 'success');
+                switchPage('owner');
+            } else {
+                showNotification('❌ Password salah!');
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+
+        passwordConfirmBtn.addEventListener('click', confirmPassword);
+        passwordCancelBtn.addEventListener('click', function() { passwordModal.classList.add('hidden'); });
+        passwordInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') confirmPassword(); });
+
+        toggleOwnerBtn.addEventListener('click', toggleOwnerMode);
+        ownerToggle.addEventListener('click', function() {
+            if (isOwnerMode) switchPage('owner');
+            else toggleOwnerMode();
+        });
+
+        // ============================================================
+        // TAMBAH LAGU
+        // ============================================================
+        function addSong() {
+            if (!isOwnerMode) { showNotification('⚠️ Hanya Owner!'); return; }
+            const playlistId = parseInt(playlistSelect.value);
+            if (!playlistId) { showNotification('⚠️ Pilih playlist tujuan!'); return; }
+            const title = inputTitle.value.trim();
+            const artist = inputArtist.value.trim();
+            const genre = inputGenre.value.trim();
+            const url = inputUrl.value.trim();
+            if (!title || !artist) { showNotification('⚠️ Judul dan Artis harus diisi!'); return; }
+            if (!url) { showNotification('⚠️ Link Spotify harus diisi!'); return; }
+            const embedUrl = getSpotifyEmbedUrl(url);
+            if (!embedUrl) {
+                showNotification('⚠️ Link Spotify tidak valid! Coba paste ulang.');
+                return;
+            }
+            const p = getPlaylist(playlistId);
+            if (!p) { showNotification('❌ Playlist tidak ditemukan!'); return; }
+            p.songs.push({ id: generateId(), title, artist, genre, url });
+            saveAllData();
+            renderAll();
+            inputTitle.value = '';
+            inputArtist.value = '';
+            inputGenre.value = '';
+            inputUrl.value = '';
+            showNotification('✅ Lagu "' + title + '" ditambahkan ke ' + p.name + '!', 'success');
+        }
+
+        addBtn.addEventListener('click', addSong);
+
+        // ============================================================
+        // CLEAR & RESET
+        // ============================================================
+        clearBtn.addEventListener('click', async function() {
+            if (!isOwnerMode) { showNotification('⚠️ Hanya Owner!'); return; }
+            showConfirm('Hapus Semua Lagu?', 'Semua lagu di semua playlist akan hilang!', async function() {
+                data.playlists.forEach(p => p.songs = []);
+                await saveAllData();
+                renderAll();
+                showNotification('🗑️ Semua lagu dihapus!', 'success');
+            });
+        });
+
+        resetDefaultBtn.addEventListener('click', async function() {
+            if (!isOwnerMode) { showNotification('⚠️ Hanya Owner!'); return; }
+            showConfirm('Reset ke Default?', 'Semua perubahan akan hilang!', async function() {
+                data = getDefaultData();
+                await saveAllData();
+                currentPlaylistId = null;
+                currentSearch = '';
+                searchBox.value = '';
+                renderAll();
+                showNotification('🔄 Data direset!', 'success');
+            });
+        });
+
+        // ============================================================
+        // PAGE SWITCH
+        // ============================================================
+        function switchPage(page) {
+            currentPage = page;
+            homeSection.classList.add('hidden');
+            requestSection.classList.remove('active');
+            koleksiSection.classList.add('hidden');
+            ownerPanel.classList.add('hidden');
+            navHome.classList.remove('active');
+            navKoleksi.classList.remove('active');
+            navRequests.classList.remove('active');
+            ownerToggle.classList.remove('active');
+
+            if (page === 'home') {
+                homeSection.classList.remove('hidden');
+                navHome.classList.add('active');
+                renderSongList();
+            } else if (page === 'koleksi') {
+                koleksiSection.classList.remove('hidden');
+                navKoleksi.classList.add('active');
+                renderKoleksi();
+            } else if (page === 'requests') {
+                requestSection.classList.add('active');
+                navRequests.classList.add('active');
+                renderUserRequests();
+            } else if (page === 'owner') {
+                ownerPanel.classList.remove('hidden');
+                ownerToggle.classList.add('active');
+                if (!isOwnerMode) toggleOwnerMode();
+            }
+        }
+
+        navHome.addEventListener('click', function() { switchPage('home'); });
+        navKoleksi.addEventListener('click', function() { switchPage('koleksi'); });
+        navRequests.addEventListener('click', function() { switchPage('requests'); });
+
+        // ============================================================
+        // REQUEST MODAL
+        // ============================================================
+        requestBtn.addEventListener('click', function() {
+            requestModal.classList.remove('hidden');
+            reqJudul.value = '';
+            reqArtis.value = '';
+            reqJudul.focus();
+        });
+        requestCancelBtn.addEventListener('click', function() { requestModal.classList.add('hidden'); });
+        requestConfirmBtn.addEventListener('click', function() {
+            addRequest(reqJudul.value, reqArtis.value);
+        });
+
+        // ============================================================
+        // OTHER EVENT LISTENERS
+        // ============================================================
+        viewAll.addEventListener('click', function(e) { e.preventDefault();
+            showAllSongs(); });
+        backLink.addEventListener('click', function() { showAllSongs(); });
+        searchBox.addEventListener('input', function() { currentSearch = this.value;
+            renderSongList(); });
+
+        editSongCancelBtn.addEventListener('click', function() { editSongModal.classList.add('hidden'); });
+        editSongConfirmBtn.addEventListener('click', function() {
+            const title = editSongTitle.value.trim();
+            const artist = editSongArtist.value.trim();
+            const genre = editSongGenre.value.trim();
+            const url = editSongUrl.value.trim();
+            if (!title || !artist) { showNotification('⚠️ Judul dan Artis harus diisi!'); return; }
+            let found = false;
+            for (const p of data.playlists) {
+                const s = p.songs.find(song => song.id === editingSongId);
+                if (s) {
+                    s.title = title;
+                    s.artist = artist;
+                    s.genre = genre;
+                    s.url = url;
+                    found = true;
+                    break;
+                }
+            }
+            if (found) {
+                saveAllData();
+                renderAll();
+                showNotification('✅ Lagu diupdate!', 'success');
+                editSongModal.classList.add('hidden');
+                editingSongId = null;
+            }
+        });
+
+        editPlaylistCancelBtn.addEventListener('click', function() {
+            editPlaylistModal.classList.add('hidden');
+            editingPlaylistId = null;
+            editPlaylistPreview.classList.remove('show');
+        });
+        editPlaylistConfirmBtn.addEventListener('click', function() {
+            const name = editPlaylistName.value.trim();
+            if (!name) { showNotification('⚠️ Nama playlist harus diisi!'); return; }
+            const p = getPlaylist(editingPlaylistId);
+            if (!p) { showNotification('❌ Playlist tidak ditemukan!'); return; }
+            p.name = name;
+            saveAllData();
+            renderAll();
+            showNotification('✅ Playlist diupdate!', 'success');
+            editPlaylistModal.classList.add('hidden');
+            editingPlaylistId = null;
+            editPlaylistPreview.classList.remove('show');
+        });
+        editPlaylistFile.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const imgData = ev.target.result;
+                    editPlaylistPreview.src = imgData;
+                    editPlaylistPreview.classList.add('show');
+                    const p = getPlaylist(editingPlaylistId);
+                    if (p) {
+                        p.image = imgData;
+                        saveAllData();
+                        renderPlaylists();
+                        showNotification('✅ Gambar cover diupdate!', 'success');
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        modalCancelBtn.addEventListener('click', closeModal);
+        modalConfirmBtn.addEventListener('click', saveNewPlaylist);
+        modalFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    tempImageData = ev.target.result;
+                    modalPreviewImg.src = tempImageData;
+                    modalPreviewImg.classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        editExistingSongBtn.addEventListener('click', function() {
+            if (!isOwnerMode) { showNotification('⚠️ Hanya Owner!'); return; }
+            const songId = parseInt(editSongSelect.value);
+            if (!songId) { showNotification('⚠️ Pilih lagu yang mau diedit!'); return; }
+            editSong(songId);
+        });
+
+        // ============================================================
+        // KEYBOARD SHORTCUTS
+        // ============================================================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden'));
+            }
+        });
+
+        // ============================================================
+        // INIT
+        // ============================================================
+        console.log('🎵 Play Musik with Firebase Authentication & Firestore');
+        console.log('🔑 Owner Password: LummXD112');
+    </script>
+</body>
+</html>
